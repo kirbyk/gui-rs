@@ -1,0 +1,38 @@
+[package]
+name = "gui"
+version = "0.0.1"
+authors = ["Nathan Stoddard <nstodda@purdue.edu>"]
+description = "A work-in-progress GUI library"
+build = "build.rs"
+
+[lib]
+name = "gui"
+doc = true
+
+[dependencies.glfw]
+git = "https://github.com/bjz/glfw-rs.git"
+default-features = false
+
+[dependencies.image]
+git = "https://github.com/PistonDevelopers/rust-image"
+
+[dependencies.freetype-rs]
+git = "https://github.com/PistonDevelopers/freetype-rs"
+
+[dependencies.gl]
+git = "https://github.com/bjz/gl-rs"
+
+[build-dependencies.gl_generator]
+git = "https://github.com/bjz/gl-rs"
+
+[build-dependencies.khronos_api]
+git = "https://github.com/bjz/gl-rs"
+
+[dependencies.gl_common]
+git = "https://github.com/bjz/gl-rs"
+
+[dependencies.vecmat]
+git = "https://github.com/nstoddard/vecmat"
+
+[dependencies]
+libc = "*"
