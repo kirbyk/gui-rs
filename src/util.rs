@@ -2,6 +2,9 @@ use std::ffi::CString;
 use std::old_io::File;
 
 
+// TODO: IDs shouldn't be copyable, and they should have a parameter for what
+// type they're an ID for; ideally, IDs for different types shouldn't be
+// comparable
 pub type Id = u64;
 
 pub struct IdGen {

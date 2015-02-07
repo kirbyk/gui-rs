@@ -1,4 +1,4 @@
-#![feature(optin_builtin_traits, unsafe_destructor, io, std_misc, core, libc, path)]
+#![feature(optin_builtin_traits, unsafe_destructor, io, std_misc, core, libc, path, unsafe_destructor)]
 #![allow(unused_variables, missing_copy_implementations, unused_unsafe, unused_mut)]
 
 extern crate glfw;
@@ -18,3 +18,4 @@ pub mod framebuffer;
 pub mod gui;
 pub mod util;
 pub mod widgets;
+pub mod new_gl_program;

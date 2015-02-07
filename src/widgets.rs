@@ -17,6 +17,7 @@ use util::*;
 use color::*;
 use mesh::*;
 use gui::*;
+use new_gl_program::*;
 
 // TODO: background color
 pub struct ButtonWidget {
@@ -267,9 +268,9 @@ pub struct ImageFixture {
 
 struct ImageFixtureEntry {
   texture: Option<Texture>,
-  mesh: Mesh,
+  mesh: NewMesh<UnlitProgram>,
   mesh_dirty: bool,
-  program: Rc<GLProgram>,
+  program: Rc<UnlitProgram>,
 }
 
 impl ImageFixture {
@@ -311,7 +312,7 @@ impl ImageFixture {
   pub fn draw(&mut self, window: &mut GUIWindow) {
     let entry = match self.entries.entry(window.id) {
       Entry::Vacant(entry) => {
-        let mesh = Mesh::new(window.unlit_program.clone(), Primitive::Triangles, MeshUsage::DynamicDraw);
+        let mesh = NewMesh::new(window.unlit_program.clone(), Primitive::Triangles, MeshUsage::DynamicDraw);
         entry.insert(ImageFixtureEntry{texture: None, mesh: mesh, mesh_dirty: true, program: window.unlit_program.clone()})
       }
       Entry::Occupied(entry) => entry.into_mut(),
@@ -325,23 +326,42 @@ impl ImageFixture {
       entry.mesh.clear();
       let image_size = image_size(&self.image);
       let source_rect_scale = Vec2(1.0 / image_size.x as f32, 1.0 / image_size.y as f32);
-      add_vertex_unlit_2d(&mut entry.mesh, self.rect.start.x as f32, self.rect.start.y as f32,
-          self.source_rect.start.x as f32 * source_rect_scale.x, self.source_rect.start.y as f32 * source_rect_scale.y);
-      add_vertex_unlit_2d(&mut entry.mesh, self.rect.end.x  as f32,  self.rect.start.y as f32,
-          self.source_rect.end.x as f32 * source_rect_scale.x, self.source_rect.start.y as f32 * source_rect_scale.y);
-      add_vertex_unlit_2d(&mut entry.mesh, self.rect.end.x  as f32,  self.rect.end.y  as f32,
-          self.source_rect.end.x as f32 * source_rect_scale.x, self.source_rect.end.y as f32 * source_rect_scale.y);
-      add_vertex_unlit_2d(&mut entry.mesh, self.rect.start.x as f32, self.rect.end.y  as f32,
-          self.source_rect.start.x as f32 * source_rect_scale.x, self.source_rect.end.y as f32 * source_rect_scale.y);
+
+      let start: Vec2<f32> = self.rect.start.cvt();
+      let end: Vec2<f32> = self.rect.end.cvt();
+      let scale = source_rect_scale;
+      entry.mesh.add_vertex(UnlitVertex{
+        pos: start,
+        texcoord: start.component_mul(scale),
+      });
+      entry.mesh.add_vertex(UnlitVertex{
+        pos: Vec2(end.x, start.y),
+        texcoord: Vec2(end.x*scale.x, start.y*scale.y),
+      });
+      entry.mesh.add_vertex(UnlitVertex{
+        pos: end,
+        texcoord: end.component_mul(scale),
+      });
+      entry.mesh.add_vertex(UnlitVertex{
+        pos: Vec2(start.x, end.y),
+        texcoord: Vec2(start.x*scale.x, end.y*scale.y),
+      });
       entry.mesh.triangle(0, 2, 1);
       entry.mesh.triangle(2, 0, 3);
     }
 
     match entry.texture {
-      Some(ref texture) => texture.bind(0),
+      Some(ref texture) => {
+        // texture.bind(0);
+        entry.mesh.draw(UnlitUniforms{
+          model_view_matrix: Mat4::ortho_flip(
+            window.window_size.x as f32, window.window_size.y as f32),
+          proj_matrix: Mat4::id(),
+          tex: &texture
+        });
+      },
       None => panic!("")
     }
-    entry.mesh.draw();
   }
 }
 

@@ -39,8 +39,11 @@ use std::sync::mpsc::Receiver;
 use vecmat::*;
 use renderer::*;
 use text::*;
+use texture::*;
 use opengl::*;
 use gl_program::*;
+use mesh::*;
+use new_gl_program::*;
 use util::*;
 use color::*;
 
@@ -289,6 +292,66 @@ pub fn init_glfw() -> Glfw {
   glfw::init(glfw::FAIL_ON_ERRORS).unwrap()
 }
 
+
+
+
+
+
+
+
+
+
+pub struct UnlitVertex {
+  pub pos: Vec2<f32>,
+  pub texcoord: Vec2<f32>,
+}
+pub struct UnlitUniforms<'a> {
+  pub model_view_matrix: Mat4<f32>,
+  pub proj_matrix: Mat4<f32>,
+  pub tex: &'a Texture,
+}
+
+pub struct UnlitProgram {
+  inner: Rc<GenericGLProgram>,
+  model_view: NewMat4Uniform,
+  proj: NewMat4Uniform,
+}
+
+impl UnlitProgram {
+  pub fn new() -> Rc<UnlitProgram> {
+    let vs_unlit      = Shader::new(include_str!("../shaders/unlit_vert_shader.glsl"), "", VertexShader);
+    let fs_unlit      = Shader::new(include_str!("../shaders/unlit_frag_shader.glsl"), "", FragmentShader);
+
+    let inner = GenericGLProgram::new(vs_unlit, fs_unlit, "out_color",
+        vec![("position",2),("texcoord",2)]);
+    let model_view = NewMat4Uniform::new("modelViewMatrix", inner.clone());
+    let proj = NewMat4Uniform::new("projMatrix", inner.clone());
+    Rc::new(UnlitProgram{inner: inner, model_view: model_view, proj: proj})
+  }
+}
+
+impl<'a> NewGLProgram for UnlitProgram {
+  fn inner(&self) -> &GenericGLProgram {
+    &self.inner
+  }
+  fn set_uniforms(&self, uniforms: UnlitUniforms) {
+    self.model_view.set(uniforms.model_view_matrix);
+    self.proj.set(uniforms.proj_matrix);
+    uniforms.tex.bind(0);
+  }
+  fn add_vertex(&self, mesh: &mut NewMesh<Self>, vertex: UnlitVertex) {
+    mesh.cur_index += 1;
+    mesh.vertex_data(vertex.pos.x);
+    mesh.vertex_data(vertex.pos.y);
+    mesh.vertex_data(vertex.texcoord.x);
+    mesh.vertex_data(vertex.texcoord.y);
+  }
+  type Vertex = UnlitVertex;
+  type Uniforms = UnlitUniforms<'a>;
+}
+
+
+
 pub struct GUIWindow<'a> {
   pub id: Id,
   mode: GUIWindowMode<'a>,
@@ -301,12 +364,13 @@ pub struct GUIWindow<'a> {
   widget_sizes: HashMap<Id, Vec2<i32>>,
   // Programs and other stuff specific to this window
   // TODO: these shouldn't be public - add a better API
-  pub unlit_program: Rc<GLProgram>,
+
+  // TODO: can we get rid of this Rc?
+  pub unlit_program: Rc<UnlitProgram>,
+
   pub untextured_program: Rc<GLProgram>,
   pub text_program: Rc<GLProgram>,
   pub text_program_2: Rc<GLProgram>,
-  pub unlit_model_view_matrix_uni: Mat4Uniform,
-  pub unlit_proj_matrix_uni: Mat4Uniform,
   pub untextured_model_view_matrix_uni: Mat4Uniform,
   pub untextured_proj_matrix_uni: Mat4Uniform,
   pub untextured_color_uni: ColorUniform,
@@ -348,6 +412,10 @@ impl<'a> GUIWindow<'a> {
     unsafe {gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);}
 
 
+
+
+
+
     let vs_unlit      = Shader::new(include_str!("../shaders/unlit_vert_shader.glsl"), "", VertexShader);
     let fs_unlit      = Shader::new(include_str!("../shaders/unlit_frag_shader.glsl"), "", FragmentShader);
     let vs_text       = Shader::new(include_str!("../shaders/text_vert_shader.glsl"), "", VertexShader);
@@ -356,8 +424,8 @@ impl<'a> GUIWindow<'a> {
     let fs_text_2     = Shader::new(include_str!("../shaders/text_frag_shader_2.glsl"), "", FragmentShader);
     let vs_untextured = Shader::new(include_str!("../shaders/untextured_vert_shader.glsl"), "", VertexShader);
     let fs_untextured = Shader::new(include_str!("../shaders/untextured_frag_shader.glsl"), "", FragmentShader);
-    let unlit_program = GLProgram::new(vs_unlit, fs_unlit, "out_color",
-        vec![("position",2),("texcoord",2)]);
+    /*let unlit_program = GLProgram::new(vs_unlit, fs_unlit, "out_color",
+        vec![("position",2),("texcoord",2)]);*/
     let text_program = GLProgram::new(vs_text, fs_text, "out_color",
         vec![("position",2),("texcoord",2),("color",4)]);
     let text_program_2 = GLProgram::new(vs_text_2, fs_text_2, "out_color",
@@ -365,8 +433,10 @@ impl<'a> GUIWindow<'a> {
     let untextured_program = GLProgram::new(vs_untextured, fs_untextured, "out_color",
         vec![("position",2), ("color",4)]);
 
-    let unlit_model_view_matrix_uni = Mat4Uniform::new("modelViewMatrix", unlit_program.clone());
-    let unlit_proj_matrix_uni = Mat4Uniform::new("projMatrix", unlit_program.clone());
+    /*let unlit_model_view_matrix_uni = Mat4Uniform::new("modelViewMatrix", unlit_program.clone());
+    let unlit_proj_matrix_uni = Mat4Uniform::new("projMatrix", unlit_program.clone());*/
+
+    let unlit_program = UnlitProgram::new();
 
     let untextured_model_view_matrix_uni = Mat4Uniform::new("modelViewMatrix", untextured_program.clone());
     let untextured_proj_matrix_uni = Mat4Uniform::new("projMatrix", untextured_program.clone());
@@ -379,8 +449,8 @@ impl<'a> GUIWindow<'a> {
       widget_poses: HashMap::new(), widget_sizes: HashMap::new(),
       unlit_program: unlit_program, untextured_program: untextured_program,
       text_program: text_program, text_program_2: text_program_2,
-      unlit_model_view_matrix_uni: unlit_model_view_matrix_uni,
-      unlit_proj_matrix_uni: unlit_proj_matrix_uni,
+      /*unlit_model_view_matrix_uni: unlit_model_view_matrix_uni,
+      unlit_proj_matrix_uni: unlit_proj_matrix_uni,*/
       untextured_model_view_matrix_uni: untextured_model_view_matrix_uni,
       untextured_proj_matrix_uni: untextured_proj_matrix_uni,
       untextured_color_uni: untextured_color_uni,
@@ -428,8 +498,8 @@ impl<'a> GUIWindow<'a> {
 
     let window_size = get_window_size(&self.glfw_window);
     // TODO: the following two lines should be disabled by default
-    self.unlit_proj_matrix_uni.set(Mat4::ortho_flip(window_size.x as f32, window_size.y as f32));
-    self.unlit_model_view_matrix_uni.set(Mat4::id());
+    /*self.unlit_proj_matrix_uni.set(Mat4::ortho_flip(window_size.x as f32, window_size.y as f32));
+    self.unlit_model_view_matrix_uni.set(Mat4::id());*/
 
     let mut layout = layout.into_layout_min_size(self);
     let min_size = layout.min_size();

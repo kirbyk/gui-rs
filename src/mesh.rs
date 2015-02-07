@@ -19,7 +19,7 @@ pub enum MeshUsage {
 }
 
 impl MeshUsage {
-  fn as_gl(&self) -> GLuint {
+  pub fn as_gl(&self) -> GLuint {
     match *self {
       StaticDraw => gl::STATIC_DRAW,
       DynamicDraw => gl::DYNAMIC_DRAW,
@@ -35,7 +35,7 @@ pub enum Primitive {
 }
 
 impl Primitive {
-  fn as_gl(&self) -> GLuint {
+  pub fn as_gl(&self) -> GLuint {
     match *self {
       Triangles => gl::TRIANGLES,
       Lines => gl::LINES,
@@ -43,6 +43,12 @@ impl Primitive {
     }
   }
 }
+
+
+
+
+
+
 
 
 /*
