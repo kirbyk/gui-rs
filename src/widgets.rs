@@ -329,22 +329,24 @@ impl ImageFixture {
 
       let start: Vec2<f32> = self.rect.start.cvt();
       let end: Vec2<f32> = self.rect.end.cvt();
+      let source_start: Vec2<f32> = self.source_rect.start.cvt();
+      let source_end: Vec2<f32> = self.source_rect.end.cvt();
       let scale = source_rect_scale;
       entry.mesh.add_vertex(UnlitVertex{
         pos: start,
-        texcoord: start.component_mul(scale),
+        texcoord: source_start.component_mul(scale),
       });
       entry.mesh.add_vertex(UnlitVertex{
         pos: Vec2(end.x, start.y),
-        texcoord: Vec2(end.x*scale.x, start.y*scale.y),
+        texcoord: Vec2(source_end.x*scale.x, source_start.y*scale.y),
       });
       entry.mesh.add_vertex(UnlitVertex{
         pos: end,
-        texcoord: end.component_mul(scale),
+        texcoord: source_end.component_mul(scale),
       });
       entry.mesh.add_vertex(UnlitVertex{
         pos: Vec2(start.x, end.y),
-        texcoord: Vec2(start.x*scale.x, end.y*scale.y),
+        texcoord: Vec2(source_start.x*scale.x, source_end.y*scale.y),
       });
       entry.mesh.triangle(0, 2, 1);
       entry.mesh.triangle(2, 0, 3);
@@ -353,9 +355,9 @@ impl ImageFixture {
     match entry.texture {
       Some(ref texture) => {
         entry.mesh.draw(UnlitUniforms{
-          model_view_matrix: Mat4::ortho_flip(
+          model_view_matrix: Mat4::id(),
+          proj_matrix: Mat4::ortho_flip(
             window.window_size.x as f32, window.window_size.y as f32),
-          proj_matrix: Mat4::id(),
           tex: &texture
         });
       },

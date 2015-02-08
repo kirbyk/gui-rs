@@ -20,10 +20,4 @@ fn main() {
     ],
     "3.0", "core",
     &mut file).unwrap();
-
-/*gl_generator::generate_bindings(gl_generator::GlobalGenerator,
-  gl_generator::registry::Ns::Gl,
-  khronos_api::GL_XML, vec![], "4.5", "core",
-  &mut file).unwrap();*/
-
 }

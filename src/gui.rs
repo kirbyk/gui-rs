@@ -1,20 +1,3 @@
-/*
-  Major differences from conrod:
-    We allow users to define their own widgets; they use a trait, not an enum
-    We use GLFW rather than SDL, meaning it's easier to get working on more platforms
-    We have a layout system and don't have to specify the locations of widgets manually
-  TODO:
-    Handle click events on specific widgets
-      Should their position be relative to the position of the widget?
-    When holding a mouse button down, it should send a repeat event
-*/
-
-/*
-  Each GLProgram object has zero or more associated uniforms, of various types. Each of these uniforms must be provided at each draw call. We shouldn't update OpenGL state unnecessarily - we need to keep track of the current values for the uniforms.
-  Additionally, each GLProgram can only accept meshes with a certain configuration of values.
-*/
-
-
 extern crate glfw;
 extern crate freetype;
 extern crate image;
@@ -268,10 +251,6 @@ impl<'a> LayoutMinSize<'a> {
 
 
 
-
-
-
-
 // TODO: get rid of lifetime by switching to String?
 pub enum GUIWindowMode<'a> {
   Fullscreen,
@@ -291,12 +270,6 @@ impl<'a> GUIWindowMode<'a> {
 pub fn init_glfw() -> Glfw {
   glfw::init(glfw::FAIL_ON_ERRORS).unwrap()
 }
-
-
-
-
-
-
 
 
 
