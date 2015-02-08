@@ -51,118 +51,6 @@ impl Primitive {
 
 
 
-/*
-trait Vertex {
-  fn write_to(mesh: &mut Mesh2<Self>);
-}
-
-impl Vertex for Vec2<f32> {
-
-}
-
-
-type Vertex = Vec2<f32>;
-  fn add_vertex(&mut self, vertex: Vec2<f32>) -> MeshIndex {
-    let index = self.inner.cur_index;
-    self.inner.cur_index += 1;
-    self.inner.vertex_data(vertex.x);
-    self.inner.vertex_data(vertex.y);
-    index
-  }
-
-
-
-struct GenericMesh {
-  pub vao: GLuint,
-  pub vbo: GLuint,
-  pub ibo: GLuint,
-  pub vertices: Vec<f32>,
-  pub indices: Vec<MeshIndex>,
-  primitive: GLuint,
-  usage: GLuint,
-  pub updated: bool,
-  pub program: Rc<GLProgram>,
-  pub cur_index: MeshIndex, // TODO: this shouldn't be updated by main
-  pub num_indices: i32,
-}
-
-impl Drop for GenericMesh {
-  fn drop(&mut self) {
-    unsafe {
-      // println!("Dropping mesh");
-      gl::DeleteBuffers(1, &self.vbo);
-      gl::DeleteBuffers(1, &self.ibo);
-      gl::DeleteVertexArrays(1, &self.vao);
-    }
-  }
-}
-
-
-
-struct Mesh2<T: Vertex> {
-  inner: GenericMesh,
-}
-*/
-
-
-/*impl Mesh<V: Vertex, U: Uniforms> {
-  fn add_vertex(vertex: V) {...}
-
-  fn draw(&mut self, uniforms: U) {...}
-}
-
-*/
-/*
-trait Mesh2 {
-  fn inner(&mut self) -> &mut GenericMesh;
-
-  fn print(&mut self) {self.inner().print()}
-  fn clear(&mut self) {self.inner().clear()}
-  fn update(&mut self) {self.inner().update()}
-  fn index(&mut self, a: MeshIndex) {self.inner().index(a)}
-  fn triangle(&mut self, a: MeshIndex, b: MeshIndex, c: MeshIndex) {
-    self.inner().triangle(a, b, c);
-  }
-  fn draw(&mut self) {self.inner().draw()}
-
-  type Vertex;
-  fn add_vertex(&mut self, vertex: Self::Vertex) -> MeshIndex;
-}
-
-
-struct UntexturedMesh {
-  inner: GenericMesh,
-}
-
-impl UntexturedMesh {
-  pub fn new(program: Rc<GLProgram>, primitive: Primitive, usage: MeshUsage) -> UntexturedMesh {
-    UntexturedMesh{inner: GenericMesh::new(program, primitive, usage)}
-  }
-}
-
-impl Mesh2 for UntexturedMesh {
-  fn inner(&mut self) -> &mut GenericMesh {&mut self.inner}
-
-  type Vertex = Vec2<f32>;
-  fn add_vertex(&mut self, vertex: Vec2<f32>) -> MeshIndex {
-    let index = self.inner.cur_index;
-    self.inner.cur_index += 1;
-    self.inner.vertex_data(vertex.x);
-    self.inner.vertex_data(vertex.y);
-    index
-  }
-}
-*/
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -294,13 +182,13 @@ impl Drop for Mesh {
 }
 
 
-pub fn add_vertex_unlit_2d(mesh: &mut Mesh, x: f32, y: f32, tex_x: f32, tex_y: f32) {
+/*pub fn add_vertex_unlit_2d(mesh: &mut Mesh, x: f32, y: f32, tex_x: f32, tex_y: f32) {
   mesh.cur_index += 1;
   mesh.vertex_data(x);
   mesh.vertex_data(y);
   mesh.vertex_data(tex_x);
   mesh.vertex_data(tex_y);
-}
+}*/
 pub fn add_vertex_text(mesh: &mut Mesh, x: f32, y: f32, tex_x: f32, tex_y: f32, color:Color<f32>) {
   mesh.cur_index += 1;
   mesh.vertex_data(x);

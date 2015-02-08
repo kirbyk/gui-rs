@@ -15,16 +15,14 @@ use mesh::*;
 
 
 pub trait NewGLProgram {
-  fn inner(&self) -> &GenericGLProgram;
-
-  // fn new_mesh(&self, primitive: Primitive, usage: MeshUsage) -> NewMesh<Self>;
-  fn set_uniforms(&self, uniforms: Self::Uniforms);
-  fn add_vertex(&self, mesh: &mut NewMesh<Self>, vertex: Self::Vertex);
-
   type Vertex;
   type Uniforms;
 
-  // Don't need to be implemented
+  fn inner(&self) -> &GenericGLProgram;
+  fn set_uniforms(&self, uniforms: Self::Uniforms);
+  fn add_vertex(&self, mesh: &mut NewMesh<Self>, vertex: Self::Vertex);
+
+  // These don't need to be implemented
   fn bind(&self) {
     self.inner().bind();
   }
@@ -41,11 +39,11 @@ pub trait NewGLProgram {
 
 
 pub struct GenericGLProgram {
-  pub id: GLuint,
-  pub vertex: Rc<Shader>,
-  pub fragment: Rc<Shader>,
-  pub frag_data_location: &'static str,
-  pub attributes: Vec<(&'static str, i32)>,
+  id: GLuint,
+  vertex: Rc<Shader>,
+  fragment: Rc<Shader>,
+  frag_data_location: &'static str,
+  attributes: Vec<(&'static str, i32)>,
 }
 
 
@@ -53,9 +51,11 @@ impl GenericGLProgram {
   pub fn id(&self) -> GLuint {self.id}
 
   // TODO: get rid of Shader struct
-  pub fn new(vertex_shader: Rc<Shader>, fragment_shader: Rc<Shader>,
+  pub fn new(vert_shader: &str, frag_shader: &str,
         frag_data_location: &'static str,
         attributes: Vec<(&'static str, i32)>) -> Rc<GenericGLProgram> {
+    let vertex_shader = Shader::new(vert_shader, "", VertexShader);
+    let fragment_shader = Shader::new(frag_shader, "", FragmentShader);
     let program = unsafe {gl::CreateProgram()};
     unsafe {
       gl::AttachShader(program, vertex_shader.id);
@@ -109,7 +109,6 @@ impl GenericGLProgram {
 
 
 
-
 pub struct NewMat4Uniform {
   pub id: GLint,
   pub program: Rc<GenericGLProgram>,
@@ -131,7 +130,7 @@ impl NewMat4Uniform {
     }
   }
 }
-/*
+
 
 pub struct NewColorUniform {
   pub id: GLint,
@@ -259,36 +258,18 @@ impl NewVec4Uniform {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-*/
-
-
-
-
 pub struct NewMesh<P: NewGLProgram> {
-  pub vao: GLuint,
-  pub vbo: GLuint,
-  pub ibo: GLuint,
-  pub vertices: Vec<f32>,
-  pub indices: Vec<MeshIndex>,
+  vao: GLuint,
+  vbo: GLuint,
+  ibo: GLuint,
+  vertices: Vec<f32>,
+  indices: Vec<MeshIndex>,
   primitive: GLuint,
   usage: GLuint,
-  pub updated: bool,
-  pub program: Rc<P>,
-  pub cur_index: MeshIndex, // TODO: this shouldn't be updated by main
-  pub num_indices: i32,
+  updated: bool,
+  program: Rc<P>,
+  cur_index: MeshIndex,
+  num_indices: i32,
 }
 
 
@@ -344,7 +325,7 @@ impl<P: NewGLProgram> NewMesh<P> {
         gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
         gl::BufferData(gl::ARRAY_BUFFER,
             (self.vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            mem::transmute(&self.vertices[0]), self.usage); //TODO: what does transmute do?
+            mem::transmute(&self.vertices[0]), self.usage);
         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.ibo);
         gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
             (self.indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
@@ -360,8 +341,8 @@ impl<P: NewGLProgram> NewMesh<P> {
   }
 
   #[inline]
-  pub fn vertex_data(&mut self, x: f32) {
-    self.vertices.push(x);
+  pub fn vertex_data(&mut self, xs: &[f32]) {
+    self.vertices.push_all(xs);
   }
 
   #[inline]
@@ -394,12 +375,15 @@ impl<P: NewGLProgram> NewMesh<P> {
     }
   }
 
-  pub fn add_vertex(&mut self, vertex: P::Vertex) {
-    // TODO: can we avoid the clone?
+  pub fn add_vertex(&mut self, vertex: P::Vertex) -> MeshIndex {
+    let index = self.cur_index;
+    self.cur_index += 1;
+    // TODO: can we avoid this clone?
     self.program.clone().add_vertex(self, vertex);
+    index
   }
 }
-
+  
 #[unsafe_destructor]
 impl<P> Drop for NewMesh<P> {
   fn drop(&mut self) {
@@ -411,4 +395,3 @@ impl<P> Drop for NewMesh<P> {
     }
   }
 }
-

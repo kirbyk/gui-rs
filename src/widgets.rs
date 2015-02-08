@@ -352,7 +352,6 @@ impl ImageFixture {
 
     match entry.texture {
       Some(ref texture) => {
-        // texture.bind(0);
         entry.mesh.draw(UnlitUniforms{
           model_view_matrix: Mat4::ortho_flip(
             window.window_size.x as f32, window.window_size.y as f32),

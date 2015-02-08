@@ -319,11 +319,10 @@ pub struct UnlitProgram {
 
 impl UnlitProgram {
   pub fn new() -> Rc<UnlitProgram> {
-    let vs_unlit      = Shader::new(include_str!("../shaders/unlit_vert_shader.glsl"), "", VertexShader);
-    let fs_unlit      = Shader::new(include_str!("../shaders/unlit_frag_shader.glsl"), "", FragmentShader);
-
-    let inner = GenericGLProgram::new(vs_unlit, fs_unlit, "out_color",
-        vec![("position",2),("texcoord",2)]);
+    let inner = GenericGLProgram::new(
+      include_str!("../shaders/unlit_vert_shader.glsl"),
+      include_str!("../shaders/unlit_frag_shader.glsl"),
+      "out_color", vec![("position",2),("texcoord",2)]);
     let model_view = NewMat4Uniform::new("modelViewMatrix", inner.clone());
     let proj = NewMat4Uniform::new("projMatrix", inner.clone());
     Rc::new(UnlitProgram{inner: inner, model_view: model_view, proj: proj})
@@ -331,23 +330,19 @@ impl UnlitProgram {
 }
 
 impl<'a> NewGLProgram for UnlitProgram {
-  fn inner(&self) -> &GenericGLProgram {
-    &self.inner
-  }
+  type Vertex = UnlitVertex;
+  type Uniforms = UnlitUniforms<'a>;
+
+  fn inner(&self) -> &GenericGLProgram {&self.inner}
   fn set_uniforms(&self, uniforms: UnlitUniforms) {
     self.model_view.set(uniforms.model_view_matrix);
     self.proj.set(uniforms.proj_matrix);
     uniforms.tex.bind(0);
   }
   fn add_vertex(&self, mesh: &mut NewMesh<Self>, vertex: UnlitVertex) {
-    mesh.cur_index += 1;
-    mesh.vertex_data(vertex.pos.x);
-    mesh.vertex_data(vertex.pos.y);
-    mesh.vertex_data(vertex.texcoord.x);
-    mesh.vertex_data(vertex.texcoord.y);
+    mesh.vertex_data(&[vertex.pos.x, vertex.pos.y,
+      vertex.texcoord.x, vertex.texcoord.y]);
   }
-  type Vertex = UnlitVertex;
-  type Uniforms = UnlitUniforms<'a>;
 }
 
 
@@ -416,25 +411,18 @@ impl<'a> GUIWindow<'a> {
 
 
 
-    let vs_unlit      = Shader::new(include_str!("../shaders/unlit_vert_shader.glsl"), "", VertexShader);
-    let fs_unlit      = Shader::new(include_str!("../shaders/unlit_frag_shader.glsl"), "", FragmentShader);
     let vs_text       = Shader::new(include_str!("../shaders/text_vert_shader.glsl"), "", VertexShader);
     let fs_text       = Shader::new(include_str!("../shaders/text_frag_shader.glsl"), "", FragmentShader);
     let vs_text_2     = Shader::new(include_str!("../shaders/text_vert_shader_2.glsl"), "", VertexShader);
     let fs_text_2     = Shader::new(include_str!("../shaders/text_frag_shader_2.glsl"), "", FragmentShader);
     let vs_untextured = Shader::new(include_str!("../shaders/untextured_vert_shader.glsl"), "", VertexShader);
     let fs_untextured = Shader::new(include_str!("../shaders/untextured_frag_shader.glsl"), "", FragmentShader);
-    /*let unlit_program = GLProgram::new(vs_unlit, fs_unlit, "out_color",
-        vec![("position",2),("texcoord",2)]);*/
     let text_program = GLProgram::new(vs_text, fs_text, "out_color",
         vec![("position",2),("texcoord",2),("color",4)]);
     let text_program_2 = GLProgram::new(vs_text_2, fs_text_2, "out_color",
         vec![("position",2),("texcoord",2)]);
     let untextured_program = GLProgram::new(vs_untextured, fs_untextured, "out_color",
         vec![("position",2), ("color",4)]);
-
-    /*let unlit_model_view_matrix_uni = Mat4Uniform::new("modelViewMatrix", unlit_program.clone());
-    let unlit_proj_matrix_uni = Mat4Uniform::new("projMatrix", unlit_program.clone());*/
 
     let unlit_program = UnlitProgram::new();
 
@@ -449,8 +437,6 @@ impl<'a> GUIWindow<'a> {
       widget_poses: HashMap::new(), widget_sizes: HashMap::new(),
       unlit_program: unlit_program, untextured_program: untextured_program,
       text_program: text_program, text_program_2: text_program_2,
-      /*unlit_model_view_matrix_uni: unlit_model_view_matrix_uni,
-      unlit_proj_matrix_uni: unlit_proj_matrix_uni,*/
       untextured_model_view_matrix_uni: untextured_model_view_matrix_uni,
       untextured_proj_matrix_uni: untextured_proj_matrix_uni,
       untextured_color_uni: untextured_color_uni,
